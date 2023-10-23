@@ -1,4 +1,4 @@
-import { useAlljobsContext } from "../pages/Alljobs";
+import { useAlljobsContext } from "../pages/AllJobs";
 import Wrapper from "../assets/wrappers/PageBtnContainer";
 import { HiChevronDoubleLeft, HiChevronDoubleRight } from "react-icons/hi";
 import { useLocation, useNavigate } from "react-router-dom";
