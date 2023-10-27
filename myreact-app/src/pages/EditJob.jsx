@@ -5,31 +5,49 @@ import customFetch from "../utils/customFetch";
 import { toast } from "react-toastify";
 import { FormRow, FormRowSelect } from "../components";
 import { JOB_STATUS, JOB_TYPE } from "../../../utils/constants";
+import { useQuery } from "@tanstack/react-query";
 
-export const loader = async ({ params }) => {
-  try {
-    const { data } = await customFetch.get(`/jobs/${params.id}`);
-    return data;
-  } catch (error) {
-    toast.error(error?.response?.data);
-    return redirect("/dashboard/alljobs");
-  }
+const singleJobQuery = (id) => {
+  return {
+    queryKey: ["getOneJob", id],
+    queryFn: async () => {
+      const { data } = await customFetch.get(`/jobs/${id}`);
+      return data;
+    },
+  };
 };
-export const action = async ({ request, params }) => {
-  const formData = await request.formData();
-  const data = Object.fromEntries(formData);
-  try {
-    await customFetch.patch(`/jobs/${params.id}`, data);
-    toast.success("job edited succesfully");
-    return redirect("/dashboard/alljobs");
-  } catch (error) {
-    toast.error(error?.response?.data);
-    return error;
-  }
-};
+export const loader =
+  (queryClient) =>
+  async ({ params }) => {
+    try {
+      await queryClient.ensureQueryData(singleJobQuery(params.id));
+      return params.id;
+    } catch (error) {
+      toast.error(error?.response?.data);
+      return redirect("/dashboard/alljobs");
+    }
+  };
+export const action =
+  (queryClient) =>
+  async ({ request, params }) => {
+    const formData = await request.formData();
+    const data = Object.fromEntries(formData);
+    try {
+      await customFetch.patch(`/jobs/${params.id}`, data);
+      queryClient.invalidateQueries(["jobs"]);
+      toast.success("job edited succesfully");
+      return redirect("/dashboard/alljobs");
+    } catch (error) {
+      toast.error(error?.response?.data);
+      return error;
+    }
+  };
 
 const EditJob = () => {
-  const { getOneJob } = useLoaderData();
+  const id = useLoaderData();
+  const {
+    data: { getOneJob },
+  } = useQuery(singleJobQuery(id));
   const job = getOneJob;
   const navigation = useNavigation();
   const isSubmitting = navigation.state === "submitting";
